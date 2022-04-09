@@ -14,17 +14,17 @@ export default class DatabaseHandler {
     }
 
     createTable(): RunResult {
-        const createTableStatement = db.prepare('CREATE TABLE IF NOT EXISTS responses (link TEXT, response TEXT, date INTEGER)');
+        const createTableStatement = db.prepare('CREATE TABLE IF NOT EXISTS responses (link TEXT, buffer BUFFER, type TEXT, date INTEGER)');
         return createTableStatement.run();
     }
 
-    addResponse(link: string, response: string, date = new Date()): RunResult {
-        const insert = db.prepare('INSERT INTO responses (link, response, date) VALUES (@link, @response, @date)');
-        return insert.run({ link, response, date });
+    addResponse(link: string, buffer: Buffer, type: string, date = Date.now()): RunResult {
+        const insert = db.prepare('INSERT INTO responses (link, buffer, type, date) VALUES (@link, @buffer, @type, @date)');
+        return insert.run({ link, buffer, type, date });
     }
 
-    getResponse(link: string): RunResult {
-        const select = db.prepare('SELECT response FROM responses WHERE link = @link');
+    getResponse(link: string) {
+        const select = db.prepare('SELECT * FROM responses WHERE link = @link');
         return select.get({ link });
     }
 

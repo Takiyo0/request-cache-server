@@ -24,22 +24,29 @@ app.get("/cache", async (req, res) => {
     const cached = db.getResponse(link);
     console.log(cached);
     if (cached) {
-        res.writeHead(200, { 
-            "Content-Type": cached.type, 
-            "Content-Length": cached.buffer.length, 
-            "Cache-Control": "public, max-age=604800" 
+        res.writeHead(200, {
+            "Content-Type": cached.type,
+            "Content-Length": cached.buffer.length,
+            "Cache-Control": "public, max-age=604800",
+            "Accept-Ranges": "bytes"
         });
-        return res.end(cached.buffer);
+        return res.end(cached.buffer, "binary");
         //return res.json({error: false, message: "Found the cache. Returning it.", response: cached.buffer});
     }
 
     const response = await axios.get(link, { transformResponse: e => e });
     const type = response.headers["content-type"];
     if (type.includes("html")) return res.json({ error: true, message: "HTML request is not allowed." });
-    const buffer = Buffer.from(response.data, 'base64');
+    const buffer = Buffer.from(response.data);
     db.addResponse(link, buffer, type);
-    res.writeHead(200, { "Content-Type": type});
-    res.end(buffer);
+
+    res.writeHead(200, {
+        "Content-Type": type,
+        "Content-Length": buffer.length,
+        "Cache-Control": "public, max-age=604800",
+        "Accept-Ranges": "bytes"
+    });
+    res.end(buffer, "binary");
 
 });
 app.listen(port, (): void => console.log(`Now listening on port ${port}`));

@@ -24,15 +24,19 @@ app.get("/cache", async (req, res) => {
     const cached = db.getResponse(link);
     console.log(cached);
     if (cached) {
-        res.setHeader("Content-Type", cached.type);
-        return res.end(cached.buffer.toString("base64"));
+        res.writeHead(200, { 
+            "Content-Type": cached.type, 
+            "Content-Length": cached.buffer.length, 
+            "Cache-Control": "public, max-age=604800" 
+        });
+        return res.end(cached.buffer);
         //return res.json({error: false, message: "Found the cache. Returning it.", response: cached.buffer});
     }
 
     const response = await axios.get(link, { transformResponse: e => e });
     const type = response.headers["content-type"];
     if (type.includes("html")) return res.json({ error: true, message: "HTML request is not allowed." });
-    const buffer = Buffer.from(response.data);
+    const buffer = Buffer.from(response.data, 'base64');
     db.addResponse(link, buffer, type);
     res.writeHead(200, { "Content-Type": type});
     res.end(buffer);
